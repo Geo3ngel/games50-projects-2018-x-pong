@@ -231,24 +231,40 @@ function love.update(dt)
 
     --
     -- paddles can move no matter what state we're in
-    --
+    -- TODO: Replace this player with AI!
     -- player 1
-    if love.keyboard.isDown('w') then
+
+    -- Neive approach:
+    if ball.y < player1.y + (player1.height/2) then
         player1.dy = -PADDLE_SPEED
-    elseif love.keyboard.isDown('s') then
+    elseif ball.y > player1.y + (player1.height/2) then
         player1.dy = PADDLE_SPEED
     else
         player1.dy = 0
     end
+    -- if love.keyboard.isDown('w') then
+    --     player1.dy = -PADDLE_SPEED
+    -- elseif love.keyboard.isDown('s') then
+    --     player1.dy = PADDLE_SPEED
+    -- else
+    --     player1.dy = 0
+    -- end
 
-    -- player 2
-    if love.keyboard.isDown('up') then
+    if ball.y < player2.y + (player2.height/2) then
         player2.dy = -PADDLE_SPEED
-    elseif love.keyboard.isDown('down') then
+    elseif ball.y > player2.y + (player2.height/2) then
         player2.dy = PADDLE_SPEED
     else
         player2.dy = 0
     end
+    -- player 2
+    -- if love.keyboard.isDown('up') then
+    --     player2.dy = -PADDLE_SPEED
+    -- elseif love.keyboard.isDown('down') then
+    --     player2.dy = PADDLE_SPEED
+    -- else
+    --     player2.dy = 0
+    -- end
 
     -- update our ball based on its DX and DY only if we're in play state;
     -- scale the velocity by dt so movement is framerate-independent
