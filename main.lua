@@ -50,6 +50,10 @@ VIRTUAL_HEIGHT = 243
 -- paddle movement speed
 PADDLE_SPEED = 200
 
+-- intelligent paddle targeting
+Prev_ball_x_velocity = 0
+Player1_paddle_target = VIRTUAL_HEIGHT/2
+
 --[[
     Called just once at the beginning of the game; used to set up
     game objects, variables, etc. and prepare the game world.
@@ -124,6 +128,43 @@ end
 ]]
 function love.resize(w, h)
     push:resize(w, h)
+end
+
+function calc_true_target(target_y)
+    if target_y < 0 then
+        return calc_true_target(math.abs(target_y))
+    elseif target_y > VIRTUAL_HEIGHT then
+        local remainder = target_y - VIRTUAL_HEIGHT
+        return calc_true_target(VIRTUAL_HEIGHT - remainder)
+    else
+        return target_y
+    end
+end
+
+-- Takes in a player, and has them seek to a specific Y value
+    -- threshold added to reduce paddle jitter.
+function seek_y_value(player, y_value, threshold)
+    local player_paddle_center = player.y + (player.height/2)
+    
+    if y_value + threshold < player_paddle_center then
+            player.dy = -PADDLE_SPEED
+        elseif y_value - threshold > player_paddle_center then
+            player.dy = PADDLE_SPEED
+        else
+            player.dy = 0
+        end
+end
+
+function calc_target_y_position(paddle)
+    -- distance from ball to p1's wall + paddle width
+    local distance = ball.x - (paddle.width + 10)
+    -- find the time it will take to get to the wall with current X velocity.
+    local time_to_paddle = math.abs(distance/ball.dx)
+    -- Calculate the y position using delta Y at the time the ball is expected to hit that position.
+    local target_y_value = ball.y + (time_to_paddle * ball.dy)
+    -- Adjust for edge hits
+    target_y_value = calc_true_target(target_y_value)
+    return target_y_value
 end
 
 --[[
@@ -231,17 +272,32 @@ function love.update(dt)
 
     --
     -- paddles can move no matter what state we're in
-    -- TODO: Replace this player with AI!
+    
     -- player 1
 
-    -- Neive approach:
-    if ball.y < player1.y + (player1.height/2) then
-        player1.dy = -PADDLE_SPEED
-    elseif ball.y > player1.y + (player1.height/2) then
-        player1.dy = PADDLE_SPEED
-    else
-        player1.dy = 0
+    -- Predictive approach:
+    -- We only want to bother predicting intelligently when the velocity is facing us.
+
+    -- Only run when in 'play' state
+    if gameState == 'play' then
+        -- Detect if the ball's x velocity has changed:
+        if Prev_ball_x_velocity ~= ball.dx then
+            Prev_ball_x_velocity = ball.dx
+            Player1_paddle_target = calc_target_y_position(player1)
+        end
+        
+        if ball.dx < 0 then
+            -- Seek to true target_y
+            seek_y_value(player1, Player1_paddle_target, 1)
+            
+        else
+            -- Track the ball
+            seek_y_value(player1, ball.y, 1)
+        end
     end
+    
+
+    -- Player Controlls:
     -- if love.keyboard.isDown('w') then
     --     player1.dy = -PADDLE_SPEED
     -- elseif love.keyboard.isDown('s') then
@@ -250,14 +306,11 @@ function love.update(dt)
     --     player1.dy = 0
     -- end
 
-    if ball.y < player2.y + (player2.height/2) then
-        player2.dy = -PADDLE_SPEED
-    elseif ball.y > player2.y + (player2.height/2) then
-        player2.dy = PADDLE_SPEED
-    else
-        player2.dy = 0
-    end
     -- player 2
+    -- Naive approach
+    seek_y_value(player2, ball.y, 1)
+
+    -- Player Controlls:
     -- if love.keyboard.isDown('up') then
     --     player2.dy = -PADDLE_SPEED
     -- elseif love.keyboard.isDown('down') then

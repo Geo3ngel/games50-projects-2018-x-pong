@@ -13,6 +13,9 @@ I'll want to predict the trajectory of the ball, and move the paddle there withi
 #### Simpler Aproach
 Although if the ball is a constant speed, it may just be simpler to have the paddel follow the Y level of the ball.
 
+#### Result:
+I ended up implementing both! Player 1 predicting the trajectory, and Player 2 naively tracking the ball.
+
 # Version of love used: 
 LOVE 11.5 (Mysterious Mysteries)
 
